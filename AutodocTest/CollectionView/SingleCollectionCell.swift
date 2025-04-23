@@ -32,6 +32,7 @@ final class SingleCollectionCell: UICollectionViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
+        imageView.cancelImageLoad()
         imageView.image = nil
     }
 }
@@ -39,8 +40,13 @@ final class SingleCollectionCell: UICollectionViewCell {
 extension SingleCollectionCell {
     func configure(itemModel: SingleItem.SingleItemModel) {
         self.itemModel = itemModel
-        if let url = URL(string: itemModel.titleImageUrl) {
-            imageView.loadImage(from: url)
+    }
+    
+    func startImageLoading() {
+        guard let titleImageUrl = itemModel?.titleImageUrl else { return }
+        if let url = URL(string: titleImageUrl) {
+            let targetSize = CGSize(width: contentView.bounds.width, height: contentView.bounds.height)
+            imageView.loadImage(from: url, targetSize: targetSize)
         }
     }
     
@@ -58,4 +64,3 @@ private extension SingleCollectionCell {
         }
     }
 }
-

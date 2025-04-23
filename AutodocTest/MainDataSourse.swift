@@ -8,13 +8,13 @@
 import UIKit
 import Combine
 
-final class MainDataSourse: UICollectionViewDiffableDataSource<SectionModel, AnyItemModel.ID> {
+final class MainDataSourse: UICollectionViewDiffableDataSource<SectionModel, UUID> {
     init(collectionView: UICollectionView,
-         dataProvoder: MockDataProvider) {
+         dataProvoder: DataProvider) {
         super.init(collectionView: collectionView) { collectionView, indexPath, itemModelID in
             let item = dataProvoder.getItem(with: itemModelID)
             
-            if let singleItem = item?.value as? SingleItem.SingleItemModel {
+            if let singleItem = item as? SingleItem.SingleItemModel {
                 guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: SingleCollectionCell.reuseID, for: indexPath) as?
                         SingleCollectionCell else { return UICollectionViewCell() }
                 cell.configure(itemModel: singleItem)

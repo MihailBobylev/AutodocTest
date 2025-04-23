@@ -7,7 +7,7 @@
 
 import UIKit
 
-protocol ItemModelProtocol: Identifiable, Hashable {
+protocol ItemModelProtocol: Hashable {
     var id: UUID { get }
 }
 

@@ -7,16 +7,16 @@
 
 import UIKit
 
-final class MockDataProvider {
-    static let shared = MockDataProvider()
+final class DataProvider {
+    static let shared = DataProvider()
     
-    private var anyItemsModels: [AnyItemModel] = []
+    private var anyItemsModels: [any ItemModelProtocol] = []
     
-    func addItem(_ item: AnyItemModel) {
+    func addItem(_ item: any ItemModelProtocol) {
         anyItemsModels.append(item)
     }
     
-    func getItem(with id: UUID) -> AnyItemModel? {
+    func getItem(with id: UUID) -> (any ItemModelProtocol)? {
         return anyItemsModels.first(where: { $0.id == id })
     }
     

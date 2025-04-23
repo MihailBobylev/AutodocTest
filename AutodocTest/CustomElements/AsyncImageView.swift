@@ -8,40 +8,16 @@
 import UIKit
 
 final class AsyncImageView: UIImageView {
-    
-    private var imageLoadTask: Task<Void, Never>?
-    
-    func loadImage(from url: URL) {
-        let key = url.absoluteString
+    private var url: URL?
 
+    func loadImage(from url: URL, targetSize: CGSize) {
+        self.url = url
         self.image = nil
-        
-        if let cachedImage = ImageCache.shared.image(forKey: key) {
-            self.image = cachedImage
-            return
-        }
-        
-        imageLoadTask = Task {
-            do {
-                let (data, _) = try await URLSession.shared.data(from: url)
-                guard !Task.isCancelled else { return }
-                
-                if let image = UIImage(data: data) {
-                    ImageCache.shared.set(image, forKey: key)
-                    await MainActor.run {
-                        self.image = image
-                    }
-                } else {
-                    print("Не удалось преобразовать изображение")
-                }
-            } catch {
-                print("Не удалось загрузить изображение:", error)
-            }
-        }
+        ImageLoaderQueue.shared.load(url: url, targetSize: targetSize, into: self)
     }
-    
+
     func cancelImageLoad() {
-        imageLoadTask?.cancel()
-        imageLoadTask = nil
+        guard let url else { return }
+        ImageLoaderQueue.shared.cancel(url: url)
     }
 }

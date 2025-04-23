@@ -21,7 +21,7 @@ protocol MainCollectionViewManagerProtocol: UICollectionViewDelegate {
 
 final class MainCollectionViewManager: NSObject, MainCollectionViewManagerProtocol {
     var pagingInfoSubject = PassthroughSubject<PagingInfo, Never>()
-    private var dataProvider = MockDataProvider.shared
+    private var dataProvider = DataProvider.shared
     private var data: [any CollectionSectionProtocol] = []
     private var collectionView: UICollectionView
     private lazy var dataSource: MainDataSourse = {
@@ -70,7 +70,7 @@ final class MainCollectionViewManager: NSObject, MainCollectionViewManagerProtoc
     }
     
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        
+        (cell as? SingleCollectionCell)?.startImageLoading()
     }
     
     func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
@@ -133,7 +133,7 @@ private extension MainCollectionViewManager {
         let item = NSCollectionLayoutItem(
             layoutSize: NSCollectionLayoutSize(
                 widthDimension: .fractionalWidth(1.0),
-                heightDimension: .fractionalWidth(aspectRatio) // <– ключевой момент
+                heightDimension: .fractionalWidth(aspectRatio)
             )
         )
         
@@ -167,23 +167,18 @@ private extension MainCollectionViewManager {
 //    }
     
     func applySnapshot(for dataSource: MainDataSourse) {
-        var snapshot = NSDiffableDataSourceSnapshot<SectionModel, AnyItemModel.ID>()
+        var snapshot = NSDiffableDataSourceSnapshot<SectionModel, UUID>()
         dataProvider.clearData()
         
         for section in data {
-            var itemsToAddIDs: [UUID] = []
-            
-            let resSection = SectionModel(type: section.type,
-                                          title: section.title)
-            
-            itemsToAddIDs = section.item.models.map {
-                let anyItem = AnyItemModel($0, sectionID: section.id)
-                dataProvider.addItem(anyItem)
-                return anyItem.id
+            let resSection = SectionModel(type: section.type, title: section.title)
+            let itemIDs = section.item.models.map { model in
+                dataProvider.addItem(model)
+                return model.id
             }
             
             snapshot.appendSections([resSection])
-            snapshot.appendItems(itemsToAddIDs, toSection: resSection)
+            snapshot.appendItems(itemIDs, toSection: resSection)
         }
 
         DispatchQueue.main.async {
