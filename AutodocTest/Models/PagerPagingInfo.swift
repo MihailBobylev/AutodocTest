@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct PagingInfo: Equatable, Hashable {
+struct PagerPagingInfo: Equatable, Hashable {
     let sectionIndex: Int
     let currentPage: Int
 }

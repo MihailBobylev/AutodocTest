@@ -42,7 +42,7 @@ final class NewsViewController: UIViewController {
         setupUI()
         
         Task {
-            await viewModel.loadNews()
+            await viewModel.loadNews(reset: true)
         }
     }
 }
@@ -50,7 +50,7 @@ final class NewsViewController: UIViewController {
 private extension NewsViewController {
     @objc func refresh(sender: UIRefreshControl) {
         Task {
-            await viewModel.loadNews()
+            await viewModel.loadNews(reset: true)
         }
         sender.endRefreshing()
     }
@@ -61,6 +61,7 @@ private extension NewsViewController {
         let layout = notificationsCollectionViewManager.createLayout()
         mainCollectionView.setCollectionViewLayout(layout, animated: false)
         mainCollectionView.delegate = notificationsCollectionViewManager
+        mainCollectionView.prefetchDataSource = notificationsCollectionViewManager
         refreshControl.addTarget(self, action: #selector(refresh(sender:)), for: .valueChanged)
         mainCollectionView.refreshControl = refreshControl
     }
@@ -79,6 +80,12 @@ private extension NewsViewController {
                 guard let error else { return }
                 self?.showToast(error: error)
             }.store(in: &cancellables)
+        
+        notificationsCollectionViewManager?.pagingInfoSubject
+            .sink { [weak self] in
+                self?.viewModel.loadNextPageIfNeeded()
+            }
+            .store(in: &cancellables)
     }
     
     func setupUI() {

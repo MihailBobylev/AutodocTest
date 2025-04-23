@@ -9,29 +9,56 @@ import Foundation
 import Combine
 
 final class NewsViewModel: ObservableObject {
-    @Published private(set) var news: [NewsItem] = []
     @Published private(set) var isLoading = false
     @Published private(set) var receivedError: (any Error)? = nil
     @Published private(set) var newsInfo: [any CollectionSectionProtocol] = []
     
+    private(set) var pagingInfo = PagingInfo(currentPage: 1, pageSize: 15, totalCount: 0)
     private let newsService: NewsServiceProtocol
     
     init(newsService: NewsServiceProtocol = NewsService()) {
         self.newsService = newsService
     }
     
-    func loadNews() async {
+    func loadNews(reset: Bool = false) async {
+        guard !isLoading else { return }
         isLoading = true
-        
+
+        if reset {
+            pagingInfo = PagingInfo(currentPage: 1, pageSize: pagingInfo.pageSize, totalCount: 0)
+        }
+
         do {
-            let newsRespone = try await newsService.fetchNews(page: 1, pageSize: 15)
-            newsInfo = newsRespone.news.map { newsItem in
-                CollectionSection(title: newsItem.title, type: .single, item: SingleItem(models: [.init(titleImageUrl: newsItem.titleImageUrl)]))
+            let response = try await newsService.fetchNews(page: pagingInfo.currentPage, pageSize: pagingInfo.pageSize)
+            
+            pagingInfo.totalCount = response.totalCount
+            
+            let newSections = response.news.map {
+                CollectionSection(
+                    title: $0.title,
+                    type: .single,
+                    item: SingleItem(models: [.init(titleImageUrl: $0.titleImageUrl)])
+                )
             }
-            //news = newsRespone.news
+
+            if reset {
+                newsInfo = newSections
+            } else {
+                newsInfo += newSections
+            }
+
+            pagingInfo.currentPage += 1
         } catch {
             receivedError = error
         }
+
         isLoading = false
+    }
+    
+    func loadNextPageIfNeeded() {
+        guard !isLoading, pagingInfo.hasMore else { return }
+        Task {
+            await loadNews()
+        }
     }
 }

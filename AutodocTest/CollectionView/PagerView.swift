@@ -50,7 +50,7 @@ final class PagerView: UICollectionReusableView {
         pageControl.currentPage = page
     }
     
-    func subscribeTo(subject: PassthroughSubject<PagingInfo, Never>, for section: Int) {
+    func subscribeTo(subject: PassthroughSubject<PagerPagingInfo, Never>, for section: Int) {
         pagingInfoToken = subject
             .filter { $0.sectionIndex == section }
             .receive(on: DispatchQueue.main)

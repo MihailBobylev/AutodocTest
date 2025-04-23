@@ -8,19 +8,14 @@
 import UIKit
 import Combine
 
-protocol MainCollectionViewManagerProtocol: UICollectionViewDelegate {
-    var pagingInfoSubject: PassthroughSubject<PagingInfo, Never> { get }
+protocol MainCollectionViewManagerProtocol: UICollectionViewDelegate, UICollectionViewDataSourcePrefetching {
+    var pagingInfoSubject: PassthroughSubject<Void, Never> { get }
     func createLayout() -> UICollectionViewCompositionalLayout
     func fillData(data: [any CollectionSectionProtocol])
 }
 
-//protocol MainCollectionViewManagerDelegate: AnyObject {
-//    func didSelectNews(info: NotificationInfo)
-//    func makePaginationSkeleton()
-//}
-
 final class MainCollectionViewManager: NSObject, MainCollectionViewManagerProtocol {
-    var pagingInfoSubject = PassthroughSubject<PagingInfo, Never>()
+    var pagingInfoSubject = PassthroughSubject<Void, Never>()
     private var dataProvider = DataProvider.shared
     private var data: [any CollectionSectionProtocol] = []
     private var collectionView: UICollectionView
@@ -71,6 +66,10 @@ final class MainCollectionViewManager: NSObject, MainCollectionViewManagerProtoc
     
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         (cell as? SingleCollectionCell)?.startImageLoading()
+        
+        if indexPath.section == data.count - 1 {
+            pagingInfoSubject.send()
+        }
     }
     
     func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
@@ -80,6 +79,24 @@ final class MainCollectionViewManager: NSObject, MainCollectionViewManagerProtoc
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let item = data[indexPath.row].item
         
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, prefetchItemsAt indexPaths: [IndexPath]) {
+        for indexPath in indexPaths {
+            guard indexPath.section < data.count else { continue }
+            (collectionView.cellForItem(at: indexPath) as? SingleCollectionCell)?.startImageLoading()
+//            let section = data[indexPath.section]
+//            guard indexPath.row < section.item.models.count else { continue }
+//            let model = section.item.models[indexPath.row]
+//            ImageLoader.shared.prefetchImage(from: model.titleImageUrl)
+        }
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cancelPrefetchingForItemsAt indexPaths: [IndexPath]) {
+        for indexPath in indexPaths {
+            guard indexPath.section < data.count else { continue }
+            (collectionView.cellForItem(at: indexPath) as? SingleCollectionCell)?.cancelImageLoading()
+        }
     }
 }
 
