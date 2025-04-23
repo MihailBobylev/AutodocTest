@@ -15,9 +15,10 @@ final class HeaderView: UICollectionReusableView {
 
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.font = .boldSystemFont(ofSize: 18)
+        label.font = .boldSystemFont(ofSize: 18.dfs)
         label.textColor = .black
         label.textAlignment = .left
+        label.numberOfLines = 2
         return label
     }()
 
@@ -30,6 +31,11 @@ final class HeaderView: UICollectionReusableView {
         fatalError("init(coder:) has not been implemented")
     }
 
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        titleLabel.text = nil
+    }
+    
     func configure(with title: String?) {
         titleLabel.text = title
     }
@@ -43,7 +49,7 @@ private extension HeaderView {
         backgroundColor = .lightGray
         addSubview(titleLabel)
         titleLabel.snp.makeConstraints { make in
-            make.top.bottom.equalToSuperview()
+            make.top.bottom.equalToSuperview().inset(8.dvs)
             make.leading.trailing.equalToSuperview().inset(8.dhs)
         }
     }

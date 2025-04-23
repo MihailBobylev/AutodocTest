@@ -9,9 +9,10 @@ import Foundation
 import Combine
 
 final class NewsViewModel: ObservableObject {
-    @Published var news: [NewsItem] = []
-    @Published var isLoading = false
+    @Published private(set) var news: [NewsItem] = []
+    @Published private(set) var isLoading = false
     @Published private(set) var receivedError: (any Error)? = nil
+    @Published private(set) var newsInfo: [any CollectionSectionProtocol] = []
     
     private let newsService: NewsServiceProtocol
     
@@ -24,7 +25,10 @@ final class NewsViewModel: ObservableObject {
         
         do {
             let newsRespone = try await newsService.fetchNews(page: 1, pageSize: 15)
-            news = newsRespone.news
+            newsInfo = newsRespone.news.map { newsItem in
+                CollectionSection(title: newsItem.title, type: .single, item: SingleItem(models: [.init(titleImageUrl: newsItem.titleImageUrl)]))
+            }
+            //news = newsRespone.news
         } catch {
             receivedError = error
         }

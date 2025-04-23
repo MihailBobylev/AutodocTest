@@ -14,13 +14,18 @@ protocol MainCollectionViewManagerProtocol: UICollectionViewDelegate {
     func fillData(data: [any CollectionSectionProtocol])
 }
 
+//protocol MainCollectionViewManagerDelegate: AnyObject {
+//    func didSelectNews(info: NotificationInfo)
+//    func makePaginationSkeleton()
+//}
+
 final class MainCollectionViewManager: NSObject, MainCollectionViewManagerProtocol {
     var pagingInfoSubject = PassthroughSubject<PagingInfo, Never>()
     private var dataProvider = MockDataProvider.shared
     private var data: [any CollectionSectionProtocol] = []
     private var collectionView: UICollectionView
     private lazy var dataSource: MainDataSourse = {
-        return MainDataSourse(collectionView: collectionView, manager: self, pagingInfoSubject: pagingInfoSubject, dataProvoder: dataProvider)
+        return MainDataSourse(collectionView: collectionView, dataProvoder: dataProvider)
     }()
     
     init(collectionView: UICollectionView) {
@@ -48,31 +53,6 @@ final class MainCollectionViewManager: NSObject, MainCollectionViewManagerProtoc
                 //Секция
                 section = NSCollectionLayoutSection(group: group)
                 section.boundarySupplementaryItems = [headerItem, footerItem]
-            case .carousel:
-                //Элементы
-                let group = makeCarouselItemGroup()
-                //Секция
-                section = NSCollectionLayoutSection(group: group)
-                
-                let pagerItem = makePagerItem()
-                
-                section.boundarySupplementaryItems = [headerItem, footerItem, pagerItem]
-                section.orthogonalScrollingBehavior = .paging
-                section.visibleItemsInvalidationHandler = { [weak self] (items, offset, env) -> Void in
-                    guard let self else { return }
-                    let pageWidth = env.container.contentSize.width
-                    let currentPage = Int((offset.x / pageWidth).rounded())
-                    pagingInfoSubject.send(PagingInfo(sectionIndex: sectionIndex, currentPage: currentPage))
-                }
-            case .announcement:
-                //Элементы
-                let group = makeAnnounceItemGroup()
-                //Секция
-                section = NSCollectionLayoutSection(group: group)
-                
-                section.orthogonalScrollingBehavior = .continuous
-                section.interGroupSpacing = 8.dhs
-                section.contentInsets = .init(top: 0, leading: 20.dhs, bottom: 0, trailing: 20.dhs)
             }
             
             return section
@@ -88,22 +68,35 @@ final class MainCollectionViewManager: NSObject, MainCollectionViewManagerProtoc
         self.data = data
         applySnapshot(for: dataSource)
     }
-}
-
-extension MainCollectionViewManager: FooterViewDelegate {
-    func collapseDescription() {
-        print("collapseDescription")
-        UIView.animate(withDuration: 0.3, animations: {
-            self.collectionView.performBatchUpdates(nil)
-        })
+    
+    func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        (cell as? SingleCollectionCell)?.cancelImageLoading()
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let item = data[indexPath.row].item
+        
     }
 }
+
+//extension MainCollectionViewManager: FooterViewDelegate {
+//    func collapseDescription() {
+//        print("collapseDescription")
+//        UIView.animate(withDuration: 0.3, animations: {
+//            self.collectionView.performBatchUpdates(nil)
+//        })
+//    }
+//}
 
 private extension MainCollectionViewManager {
     func makeHeader() -> NSCollectionLayoutBoundarySupplementaryItem {
         let headerSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
-            heightDimension: .absolute(44.dvs)
+            heightDimension: .absolute(60.dvs)
         )
         let headerItem = NSCollectionLayoutBoundarySupplementaryItem(
             layoutSize: headerSize,
@@ -135,53 +128,19 @@ private extension MainCollectionViewManager {
     }
     
     func makeSingleItemGroup() -> NSCollectionLayoutGroup {
+        let aspectRatio: CGFloat = 1067.0 / 1600.0
+        
         let item = NSCollectionLayoutItem(
             layoutSize: NSCollectionLayoutSize(
                 widthDimension: .fractionalWidth(1.0),
-                heightDimension: .absolute(400.dvs)
+                heightDimension: .fractionalWidth(aspectRatio) // <– ключевой момент
             )
         )
         
         let group = NSCollectionLayoutGroup.horizontal(
             layoutSize: NSCollectionLayoutSize(
                 widthDimension: .fractionalWidth(1.0),
-                heightDimension: .absolute(400.dvs)
-            ),
-            subitems: [item]
-        )
-        return group
-    }
-    
-    func makeCarouselItemGroup() -> NSCollectionLayoutGroup {
-        let item = NSCollectionLayoutItem(
-            layoutSize: NSCollectionLayoutSize(
-                widthDimension: .fractionalWidth(1.0),
-                heightDimension: .absolute(400.dvs)
-            )
-        )
-        
-        let group = NSCollectionLayoutGroup.horizontal(
-            layoutSize: NSCollectionLayoutSize(
-                widthDimension: .fractionalWidth(1.0),
-                heightDimension: .absolute(400.dvs)
-            ),
-            subitems: [item]
-        )
-        return group
-    }
-    
-    func makeAnnounceItemGroup() -> NSCollectionLayoutGroup {
-        let item = NSCollectionLayoutItem(
-            layoutSize: NSCollectionLayoutSize(
-                widthDimension: .absolute(200.dhs),
-                heightDimension: .absolute(120.dvs)
-            )
-        )
-        
-        let group = NSCollectionLayoutGroup.horizontal(
-            layoutSize: NSCollectionLayoutSize(
-                widthDimension: .absolute(200.dhs),
-                heightDimension: .absolute(120.dvs)
+                heightDimension: .fractionalWidth(aspectRatio)
             ),
             subitems: [item]
         )
@@ -189,39 +148,37 @@ private extension MainCollectionViewManager {
         return group
     }
     
-    func makePagerItem() -> NSCollectionLayoutBoundarySupplementaryItem {
-        let anchor = NSCollectionLayoutAnchor(
-            edges: [.bottom],
-            absoluteOffset: CGPoint(x: 0, y: -30.dvs)
-        )
-        
-        let size = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
-                                          heightDimension: .absolute(50.dvs))
-        
-        let pagerItem = NSCollectionLayoutBoundarySupplementaryItem(layoutSize: size,
-                                                                    elementKind: "PagerKind",
-                                                                    containerAnchor: anchor)
-        
-        pagerItem.zIndex = 999
-        
-        return pagerItem
-    }
+//    func makePagerItem() -> NSCollectionLayoutBoundarySupplementaryItem {
+//        let anchor = NSCollectionLayoutAnchor(
+//            edges: [.bottom],
+//            absoluteOffset: CGPoint(x: 0, y: -30.dvs)
+//        )
+//        
+//        let size = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
+//                                          heightDimension: .absolute(50.dvs))
+//        
+//        let pagerItem = NSCollectionLayoutBoundarySupplementaryItem(layoutSize: size,
+//                                                                    elementKind: "PagerKind",
+//                                                                    containerAnchor: anchor)
+//        
+//        pagerItem.zIndex = 999
+//        
+//        return pagerItem
+//    }
     
     func applySnapshot(for dataSource: MainDataSourse) {
         var snapshot = NSDiffableDataSourceSnapshot<SectionModel, AnyItemModel.ID>()
-
+        dataProvider.clearData()
+        
         for section in data {
             var itemsToAddIDs: [UUID] = []
             
             let resSection = SectionModel(type: section.type,
-                                          title: section.title,
-                                          likes: section.likes,
-                                          description: section.description,
-                                          countOfItems: section.item.models.count)
+                                          title: section.title)
             
             itemsToAddIDs = section.item.models.map {
                 let anyItem = AnyItemModel($0, sectionID: section.id)
-                dataProvider.anyItemsModels.append(anyItem)
+                dataProvider.addItem(anyItem)
                 return anyItem.id
             }
             

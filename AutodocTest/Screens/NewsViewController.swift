@@ -13,14 +13,13 @@ final class NewsViewController: UIViewController {
     private let mainCollectionView: UICollectionView = {
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
         collectionView.register(SingleCollectionCell.self, forCellWithReuseIdentifier: SingleCollectionCell.reuseID)
-        collectionView.register(CarouselCollectionCell.self, forCellWithReuseIdentifier: CarouselCollectionCell.reuseID)
-        collectionView.register(AnouncementCollectionCell.self, forCellWithReuseIdentifier: AnouncementCollectionCell.reuseID)
         collectionView.register(HeaderView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: HeaderView.reuseID)
         collectionView.register(FooterView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionFooter, withReuseIdentifier: FooterView.reuseID)
-        collectionView.register(PagerView.self, forSupplementaryViewOfKind: "PagerKind", withReuseIdentifier: PagerView.reuseID)
+        //collectionView.register(PagerView.self, forSupplementaryViewOfKind: "PagerKind", withReuseIdentifier: PagerView.reuseID)
         collectionView.backgroundColor = .white
         return collectionView
     }()
+    private let refreshControl = UIRefreshControl()
     
     private let viewModel: NewsViewModel
     private var notificationsCollectionViewManager: MainCollectionViewManagerProtocol?
@@ -42,14 +41,6 @@ final class NewsViewController: UIViewController {
         bind()
         setupUI()
         
-        notificationsCollectionViewManager = MainCollectionViewManager(collectionView: mainCollectionView)
-        guard let notificationsCollectionViewManager else { return }
-        let layout = notificationsCollectionViewManager.createLayout()
-        mainCollectionView.setCollectionViewLayout(layout, animated: false)
-        mainCollectionView.delegate = notificationsCollectionViewManager
-        
-        notificationsCollectionViewManager.fillData(data: MockDataProvider.shared.itemsInfo)
-        
         Task {
             await viewModel.loadNews()
         }
@@ -57,26 +48,29 @@ final class NewsViewController: UIViewController {
 }
 
 private extension NewsViewController {
-    func setupUI() {
-        view.addSubview(mainCollectionView)
-        
-        mainCollectionView.snp.makeConstraints { make in
-            make.edges.equalToSuperview()
+    @objc func refresh(sender: UIRefreshControl) {
+        Task {
+            await viewModel.loadNews()
         }
+        sender.endRefreshing()
     }
     
     func setupAppearance() {
-        
+        notificationsCollectionViewManager = MainCollectionViewManager(collectionView: mainCollectionView)
+        guard let notificationsCollectionViewManager else { return }
+        let layout = notificationsCollectionViewManager.createLayout()
+        mainCollectionView.setCollectionViewLayout(layout, animated: false)
+        mainCollectionView.delegate = notificationsCollectionViewManager
+        refreshControl.addTarget(self, action: #selector(refresh(sender:)), for: .valueChanged)
+        mainCollectionView.refreshControl = refreshControl
     }
     
     func bind() {
-        viewModel.$news
+        viewModel.$newsInfo
             .receive(on: DispatchQueue.main)
             .sink { [weak self] news in
-                //            guard let user else { return }
-                //            self?.setupNavigationBar(for: user)
-                //            self?.collectionView.reloadData()
-                print("### \(news)")
+                guard let self else { return }
+                notificationsCollectionViewManager?.fillData(data: news)
             }.store(in: &cancellables)
         
         viewModel.$receivedError
@@ -85,5 +79,13 @@ private extension NewsViewController {
                 guard let error else { return }
                 self?.showToast(error: error)
             }.store(in: &cancellables)
+    }
+    
+    func setupUI() {
+        view.addSubview(mainCollectionView)
+        
+        mainCollectionView.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
+        }
     }
 }

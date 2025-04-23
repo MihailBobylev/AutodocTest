@@ -9,12 +9,17 @@ import UIKit
 import SnapKit
 
 final class SingleCollectionCell: UICollectionViewCell {
+    private let imageView: AsyncImageView = {
+        let imageView = AsyncImageView()
+        imageView.contentMode = .scaleAspectFit
+        return imageView
+    }()
     
     static var reuseID: String {
         String(describing: Self.self)
     }
     
-    private var itemModel: SingleItem.SingleColorItem?
+    private var itemModel: SingleItem.SingleItemModel?
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -27,20 +32,30 @@ final class SingleCollectionCell: UICollectionViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
-        contentView.backgroundColor = nil
+        imageView.image = nil
     }
 }
 
 extension SingleCollectionCell {
-    func configure(itemModel: SingleItem.SingleColorItem) {
+    func configure(itemModel: SingleItem.SingleItemModel) {
         self.itemModel = itemModel
-        contentView.backgroundColor = itemModel.color
+        if let url = URL(string: itemModel.titleImageUrl) {
+            imageView.loadImage(from: url)
+        }
+    }
+    
+    func cancelImageLoading() {
+        imageView.cancelImageLoad()
     }
 }
 
 private extension SingleCollectionCell {
     func setupUI() {
+        contentView.addSubview(imageView)
         
+        imageView.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
+        }
     }
 }
 
