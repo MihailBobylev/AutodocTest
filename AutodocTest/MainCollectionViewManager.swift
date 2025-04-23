@@ -8,7 +8,7 @@
 import UIKit
 import Combine
 
-protocol MainCollectionViewManagerProtocol: UICollectionViewDelegate, UICollectionViewDataSourcePrefetching {
+protocol MainCollectionViewManagerProtocol: UICollectionViewDelegate {
     var pagingInfoSubject: PassthroughSubject<Void, Never> { get }
     func createLayout() -> UICollectionViewCompositionalLayout
     func fillData(data: [any CollectionSectionProtocol])
@@ -79,24 +79,6 @@ final class MainCollectionViewManager: NSObject, MainCollectionViewManagerProtoc
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let item = data[indexPath.row].item
         
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, prefetchItemsAt indexPaths: [IndexPath]) {
-        for indexPath in indexPaths {
-            guard indexPath.section < data.count else { continue }
-            (collectionView.cellForItem(at: indexPath) as? SingleCollectionCell)?.startImageLoading()
-//            let section = data[indexPath.section]
-//            guard indexPath.row < section.item.models.count else { continue }
-//            let model = section.item.models[indexPath.row]
-//            ImageLoader.shared.prefetchImage(from: model.titleImageUrl)
-        }
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, cancelPrefetchingForItemsAt indexPaths: [IndexPath]) {
-        for indexPath in indexPaths {
-            guard indexPath.section < data.count else { continue }
-            (collectionView.cellForItem(at: indexPath) as? SingleCollectionCell)?.cancelImageLoading()
-        }
     }
 }
 

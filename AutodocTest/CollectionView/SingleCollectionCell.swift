@@ -40,10 +40,13 @@ final class SingleCollectionCell: UICollectionViewCell {
 extension SingleCollectionCell {
     func configure(itemModel: SingleItem.SingleItemModel) {
         self.itemModel = itemModel
+        startImageLoading()
     }
     
     func startImageLoading() {
         guard let titleImageUrl = itemModel?.titleImageUrl else { return }
+        guard imageView.image == nil else { return }
+        
         if let url = URL(string: titleImageUrl) {
             let targetSize = CGSize(width: contentView.bounds.width, height: contentView.bounds.height)
             imageView.loadImage(from: url, targetSize: targetSize)

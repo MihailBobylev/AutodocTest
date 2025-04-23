@@ -61,7 +61,6 @@ private extension NewsViewController {
         let layout = notificationsCollectionViewManager.createLayout()
         mainCollectionView.setCollectionViewLayout(layout, animated: false)
         mainCollectionView.delegate = notificationsCollectionViewManager
-        mainCollectionView.prefetchDataSource = notificationsCollectionViewManager
         refreshControl.addTarget(self, action: #selector(refresh(sender:)), for: .valueChanged)
         mainCollectionView.refreshControl = refreshControl
     }
