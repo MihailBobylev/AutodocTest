@@ -9,19 +9,22 @@ import UIKit
 import Combine
 
 protocol MainCollectionViewManagerProtocol: UICollectionViewDelegate {
-    var pagingInfoSubject: PassthroughSubject<Void, Never> { get }
+    var getNextPageSubject: PassthroughSubject<Void, Never> { get }
+    var openNewsDetailsFromUrl: PassthroughSubject<String, Never> { get }
     func createLayout() -> UICollectionViewCompositionalLayout
-    func fillData(data: [any CollectionSectionProtocol])
+    func fillData(loadedData: LoadedData)
 }
 
 final class MainCollectionViewManager: NSObject, MainCollectionViewManagerProtocol {
-    var pagingInfoSubject = PassthroughSubject<Void, Never>()
     private var dataProvider = DataProvider.shared
     private var data: [any CollectionSectionProtocol] = []
     private var collectionView: UICollectionView
     private lazy var dataSource: MainDataSourse = {
         return MainDataSourse(collectionView: collectionView, dataProvoder: dataProvider)
     }()
+    
+    let getNextPageSubject = PassthroughSubject<Void, Never>()
+    let openNewsDetailsFromUrl = PassthroughSubject<String, Never>()
     
     init(collectionView: UICollectionView) {
         self.collectionView = collectionView
@@ -59,26 +62,36 @@ final class MainCollectionViewManager: NSObject, MainCollectionViewManagerProtoc
         return layout
     }
     
-    func fillData(data: [any CollectionSectionProtocol]) {
-        self.data = data
-        applySnapshot(for: dataSource)
+    func fillData(loadedData: LoadedData) {
+        if loadedData.isPagination {
+            self.data += loadedData.newsInfo
+        } else {
+            self.data = loadedData.newsInfo
+        }
+        
+        applySnapshot(for: dataSource, loadedNewsItems: loadedData.newsInfo, isPagination: loadedData.isPagination)
     }
     
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         (cell as? SingleCollectionCell)?.startImageLoading()
         
         if indexPath.section == data.count - 1 {
-            pagingInfoSubject.send()
+            getNextPageSubject.send()
         }
     }
     
     func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        (cell as? SingleCollectionCell)?.cancelImageLoading()
+        //(cell as? SingleCollectionCell)?.cancelImageLoading()
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let item = data[indexPath.row].item
-        
+        let selectedItem = data[indexPath.section]
+        switch selectedItem.type {
+        case .single:
+            if let selectedItem = selectedItem as? CollectionSection<SingleItem> {
+                openNewsDetailsFromUrl.send(selectedItem.fullUrl)
+            }
+        }
     }
 }
 
@@ -165,12 +178,14 @@ private extension MainCollectionViewManager {
 //        return pagerItem
 //    }
     
-    func applySnapshot(for dataSource: MainDataSourse) {
-        var snapshot = NSDiffableDataSourceSnapshot<SectionModel, UUID>()
-        dataProvider.clearData()
+    func applySnapshot(for dataSource: MainDataSourse, loadedNewsItems: [any CollectionSectionProtocol], isPagination: Bool) {
+        var snapshot = dataSource.snapshot()
+        if !isPagination {
+            dataProvider.clearData()
+        }
         
-        for section in data {
-            let resSection = SectionModel(type: section.type, title: section.title)
+        for section in loadedNewsItems {
+            let resSection = SectionModel(type: section.type, title: section.title, categoryType: "")
             let itemIDs = section.item.models.map { model in
                 dataProvider.addItem(model)
                 return model.id

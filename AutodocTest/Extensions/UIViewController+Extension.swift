@@ -13,7 +13,7 @@ extension UIViewController {
         showToast(message: message, interval: interval)
     }
     
-    func showToast(message: String, interval: Double) {
+    func showToast(message: String, interval: Double = 3) {
         let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
         
         alert.view.backgroundColor = .accentColor

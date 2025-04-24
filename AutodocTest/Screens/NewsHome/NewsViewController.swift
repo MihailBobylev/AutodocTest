@@ -21,6 +21,8 @@ final class NewsViewController: UIViewController {
     }()
     private let refreshControl = UIRefreshControl()
     
+    private let router: NewsRouter = .init()
+    
     private let viewModel: NewsViewModel
     private var notificationsCollectionViewManager: MainCollectionViewManagerProtocol?
     private var cancellables: Set<AnyCancellable> = []
@@ -66,23 +68,31 @@ private extension NewsViewController {
     }
     
     func bind() {
-        viewModel.$newsInfo
+        viewModel.loadedDataSubject
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] news in
+            .sink { [weak self] loadedData in
                 guard let self else { return }
-                notificationsCollectionViewManager?.fillData(data: news)
+                notificationsCollectionViewManager?.fillData(loadedData: loadedData)
             }.store(in: &cancellables)
         
         viewModel.$receivedError
             .receive(on: DispatchQueue.main)
             .sink { [weak self] error in
-                guard let error else { return }
-                self?.showToast(error: error)
+                guard let self, let error else { return }
+                showToast(error: error)
             }.store(in: &cancellables)
         
-        notificationsCollectionViewManager?.pagingInfoSubject
+        notificationsCollectionViewManager?.getNextPageSubject
             .sink { [weak self] in
-                self?.viewModel.loadNextPageIfNeeded()
+                guard let self else { return }
+                viewModel.loadNextPageIfNeeded()
+            }
+            .store(in: &cancellables)
+        
+        notificationsCollectionViewManager?.openNewsDetailsFromUrl
+            .sink { [weak self] fullUrl in
+                guard let self else { return }
+                router.route(to: .newsDetails(fullURL: fullUrl), from: self)
             }
             .store(in: &cancellables)
     }

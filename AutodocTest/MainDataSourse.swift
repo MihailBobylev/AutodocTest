@@ -49,7 +49,7 @@ final class MainDataSourse: UICollectionViewDiffableDataSource<SectionModel, UUI
                         for: indexPath
                     ) as? FooterView else { return UICollectionReusableView() }
                     
-                    footer.configure(with: nil, description: nil)
+                    footer.configure(with: section.categoryType)
                     return footer
                 }
             }

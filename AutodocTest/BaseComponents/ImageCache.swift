@@ -20,7 +20,7 @@ final class ImageCache {
     func set(_ image: UIImage, forKey key: String) {
         cache.setObject(image, forKey: key as NSString)
     }
-
+    
     func resizedImage(_ image: UIImage, targetSize: CGSize) -> UIImage {
         let renderer = UIGraphicsImageRenderer(size: targetSize)
         return renderer.image { _ in

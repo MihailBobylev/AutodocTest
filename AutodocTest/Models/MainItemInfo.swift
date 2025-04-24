@@ -38,12 +38,12 @@ protocol CollectionSectionProtocol: Hashable {
 
 struct CollectionSection<T: CollectionItemProtocol>: Identifiable, CollectionSectionProtocol {
     let id = UUID()
-//    let newsID: Int
+    let newsID: Int
     let title: String?
-//    let description: String
-//    let publishedDate: String
-//    let fullUrl: String
-//    let categoryType: String
+    let description: String
+    let publishedDate: String
+    let fullUrl: String
+    let categoryType: String
     let type: SectionType
     let item: T
 }
@@ -52,7 +52,7 @@ struct SectionModel: Hashable {
     let id = UUID()
     let type: SectionType
     let title: String?
-    //let countOfItems: Int
+    let categoryType: String
 }
 
 enum SectionType: Hashable {

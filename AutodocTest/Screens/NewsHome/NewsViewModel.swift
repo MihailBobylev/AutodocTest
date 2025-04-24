@@ -8,10 +8,16 @@
 import Foundation
 import Combine
 
+struct LoadedData {
+    let newsInfo: [any CollectionSectionProtocol]
+    let isPagination: Bool
+}
+
 final class NewsViewModel: ObservableObject {
     @Published private(set) var isLoading = false
     @Published private(set) var receivedError: (any Error)? = nil
-    @Published private(set) var newsInfo: [any CollectionSectionProtocol] = []
+    
+    let loadedDataSubject = PassthroughSubject<LoadedData, Never>()
     
     private(set) var pagingInfo = PagingInfo(currentPage: 1, pageSize: 15, totalCount: 0)
     private let newsService: NewsServiceProtocol
@@ -35,17 +41,23 @@ final class NewsViewModel: ObservableObject {
             
             let newSections = response.news.map {
                 CollectionSection(
+                    newsID: $0.id,
                     title: $0.title,
+                    description: $0.description,
+                    publishedDate: $0.publishedDate,
+                    fullUrl: $0.fullUrl,
+                    categoryType: $0.categoryType,
                     type: .single,
                     item: SingleItem(models: [.init(titleImageUrl: $0.titleImageUrl)])
                 )
             }
 
-            if reset {
-                newsInfo = newSections
-            } else {
-                newsInfo += newSections
-            }
+            loadedDataSubject.send(.init(newsInfo: newSections, isPagination: !reset))
+//            if reset {
+//                newsInfo = newSections
+//            } else {
+//                newsInfo += newSections
+//            }
 
             pagingInfo.currentPage += 1
         } catch {

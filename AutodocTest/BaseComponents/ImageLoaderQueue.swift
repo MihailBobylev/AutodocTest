@@ -17,9 +17,11 @@ final class ImageLoaderQueue {
 
     private init() {}
 
-    func load(url: URL, targetSize: CGSize, into imageView: UIImageView) {
+    func load(url: URL, targetSize: CGSize, into imageView: UIImageView, expectedURL: URL) {
+        imageView.image = nil
+        
         let key = url.absoluteString
-
+        
         if let cached = ImageCache.shared.image(forKey: key) {
             imageView.image = cached
             return
@@ -36,9 +38,11 @@ final class ImageLoaderQueue {
             }
 
             do {
+                //guard expectedURL == url else { return }
                 let (data, _) = try await URLSession.shared.data(from: url)
                 guard !Task.isCancelled else { return }
-
+                guard expectedURL == url else { return }
+                
                 if let image = UIImage(data: data) {
                     let resized = ImageCache.shared.resizedImage(image, targetSize: targetSize)
                     ImageCache.shared.set(resized, forKey: key)

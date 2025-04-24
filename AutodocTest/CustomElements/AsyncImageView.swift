@@ -8,16 +8,16 @@
 import UIKit
 
 final class AsyncImageView: UIImageView {
-    private var url: URL?
+    private var currentLoadingURL: URL?
 
     func loadImage(from url: URL, targetSize: CGSize) {
-        self.url = url
+        self.currentLoadingURL = url
         self.image = nil
-        ImageLoaderQueue.shared.load(url: url, targetSize: targetSize, into: self)
+        ImageLoaderQueue.shared.load(url: url, targetSize: targetSize, into: self, expectedURL: url)
     }
 
     func cancelImageLoad() {
-        guard let url else { return }
-        ImageLoaderQueue.shared.cancel(url: url)
+        guard let currentLoadingURL else { return }
+        ImageLoaderQueue.shared.cancel(url: currentLoadingURL)
     }
 }
