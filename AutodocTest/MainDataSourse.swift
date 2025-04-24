@@ -12,6 +12,11 @@ final class MainDataSourse: UICollectionViewDiffableDataSource<GeneralSectionTyp
     init(collectionView: UICollectionView,
          dataProvoder: DataProvider) {
         super.init(collectionView: collectionView) { collectionView, indexPath, itemModelID in
+            if itemModelID == LoaderCollectionCell.id {
+                guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: LoaderCollectionCell.reuseID, for: indexPath) as? LoaderCollectionCell else { return UICollectionViewCell() }
+                return cell
+            }
+            
             let item = dataProvoder.getItem(with: itemModelID)
             
             if let singleItem = item as? SingleItem.SingleItemModel {
@@ -37,6 +42,8 @@ final class MainDataSourse: UICollectionViewDiffableDataSource<GeneralSectionTyp
                     
                     header.configure(with: model.title)
                     return header
+                default:
+                    break
                 }
             }
             
@@ -51,25 +58,10 @@ final class MainDataSourse: UICollectionViewDiffableDataSource<GeneralSectionTyp
                     
                     footer.configure(with: model.categoryType)
                     return footer
+                default:
+                    break
                 }
             }
-            
-//            if kind == "PagerKind" {
-//                switch section.type {
-//                case .announcement, .single:
-//                    return nil
-//                case .carousel:
-//                    guard let pagerView = collectionView.dequeueReusableSupplementaryView(
-//                        ofKind: kind,
-//                        withReuseIdentifier: PagerView.reuseID,
-//                        for: indexPath
-//                    ) as? PagerView else { return UICollectionReusableView() }
-//                    
-//                    pagerView.configure(numberOfPages: section.countOfItems)
-//                    pagerView.subscribeTo(subject: pagingInfoSubject, for: indexPath.section)
-//                    return pagerView
-//                }
-//            }
             
             return nil
         }

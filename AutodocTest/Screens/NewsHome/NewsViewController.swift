@@ -13,9 +13,9 @@ final class NewsViewController: UIViewController {
     private let mainCollectionView: UICollectionView = {
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
         collectionView.register(SingleCollectionCell.self, forCellWithReuseIdentifier: SingleCollectionCell.reuseID)
+        collectionView.register(LoaderCollectionCell.self, forCellWithReuseIdentifier: LoaderCollectionCell.reuseID)
         collectionView.register(HeaderView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: HeaderView.reuseID)
         collectionView.register(FooterView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionFooter, withReuseIdentifier: FooterView.reuseID)
-        //collectionView.register(PagerView.self, forSupplementaryViewOfKind: "PagerKind", withReuseIdentifier: PagerView.reuseID)
         collectionView.backgroundColor = .white
         return collectionView
     }()
@@ -51,6 +51,7 @@ final class NewsViewController: UIViewController {
 
 private extension NewsViewController {
     @objc func refresh(sender: UIRefreshControl) {
+        notificationsCollectionViewManager?.resetAllData()
         Task {
             await viewModel.loadNews(reset: true)
         }
@@ -58,6 +59,7 @@ private extension NewsViewController {
     }
     
     func setupAppearance() {
+        self.title = "Новости"
         notificationsCollectionViewManager = MainCollectionViewManager(collectionView: mainCollectionView)
         guard let notificationsCollectionViewManager else { return }
         let layout = notificationsCollectionViewManager.createLayout()
@@ -73,6 +75,14 @@ private extension NewsViewController {
             .sink { [weak self] loadedData in
                 guard let self else { return }
                 notificationsCollectionViewManager?.fillData(loadedData: loadedData)
+            }.store(in: &cancellables)
+        
+        viewModel.$isLoading
+            .dropFirst()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isLoading in
+                guard let self else { return }
+                notificationsCollectionViewManager?.setLoading(isLoading)
             }.store(in: &cancellables)
         
         viewModel.$receivedError

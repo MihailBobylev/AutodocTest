@@ -13,6 +13,8 @@ protocol MainCollectionViewManagerProtocol: UICollectionViewDelegate {
     var openNewsDetailsFromUrl: PassthroughSubject<String, Never> { get }
     func createLayout() -> UICollectionViewCompositionalLayout
     func fillData(loadedData: LoadedData)
+    func resetAllData()
+    func setLoading(_ isLoading: Bool)
 }
 
 final class MainCollectionViewManager: NSObject, MainCollectionViewManagerProtocol {
@@ -35,22 +37,18 @@ final class MainCollectionViewManager: NSObject, MainCollectionViewManagerProtoc
         let layout = UICollectionViewCompositionalLayout { [weak self] sectionIndex, layoutEnvironment in
             guard let self else { return nil }
             
-            // Хедер
-            let headerItem = makeHeader()
-            
-            //Футер
-            let footerItem = makeFooter()
-            
-            let sectionType = data[sectionIndex].type
+            let sectionType = self.dataSource.snapshot().sectionIdentifiers[sectionIndex]
             var section: NSCollectionLayoutSection
             
             switch sectionType {
             case .single:
-                //Элементы
-                let group = makeSingleItemGroup()
-                //Секция
-                section = NSCollectionLayoutSection(group: group)
+                let headerItem = makeHeader()
+                let footerItem = makeFooter()
+                
+                section = makeSingleItemSection()
                 section.boundarySupplementaryItems = [headerItem, footerItem]
+            case .loading:
+                section = makeLoaderItemSection()
             }
             
             return section
@@ -69,9 +67,35 @@ final class MainCollectionViewManager: NSObject, MainCollectionViewManagerProtoc
             self.data = loadedData.newsInfo
         }
         
-        applySnapshot(for: dataSource, loadedNewsItems: loadedData.newsInfo, isPagination: loadedData.isPagination)
+        applySnapshot(for: dataSource, loadedNewsItems: loadedData.newsInfo)
     }
     
+    func resetAllData() {
+        dataProvider.clearData()
+        
+        var snapshot = dataSource.snapshot()
+        snapshot.deleteAllItems()
+        dataSource.apply(snapshot, animatingDifferences: true)
+    }
+    
+    func setLoading(_ isLoading: Bool) {
+        var snapshot = dataSource.snapshot()
+        
+        if isLoading {
+            guard !snapshot.sectionIdentifiers.contains(.loading) else { return }
+            snapshot.appendSections([.loading])
+            snapshot.appendItems([LoaderCollectionCell.id], toSection: .loading)
+        } else {
+            if snapshot.sectionIdentifiers.contains(.loading) {
+                snapshot.deleteSections([.loading])
+            }
+        }
+        
+        self.dataSource.apply(snapshot, animatingDifferences: true)
+    }
+}
+
+extension MainCollectionViewManager {
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         (cell as? SingleCollectionCell)?.startImageLoading()
         
@@ -85,18 +109,11 @@ final class MainCollectionViewManager: NSObject, MainCollectionViewManagerProtoc
         switch selectedItem.type {
         case let .single(model):
             openNewsDetailsFromUrl.send(model.fullUrl)
+        case .loading:
+            break
         }
     }
 }
-
-//extension MainCollectionViewManager: FooterViewDelegate {
-//    func collapseDescription() {
-//        print("collapseDescription")
-//        UIView.animate(withDuration: 0.3, animations: {
-//            self.collectionView.performBatchUpdates(nil)
-//        })
-//    }
-//}
 
 private extension MainCollectionViewManager {
     func makeHeader() -> NSCollectionLayoutBoundarySupplementaryItem {
@@ -133,7 +150,7 @@ private extension MainCollectionViewManager {
         return footerItem
     }
     
-    func makeSingleItemGroup() -> NSCollectionLayoutGroup {
+    func makeSingleItemSection() -> NSCollectionLayoutSection {
         let aspectRatio: CGFloat = 1067.0 / 1600.0
         
         let item = NSCollectionLayoutItem(
@@ -151,32 +168,29 @@ private extension MainCollectionViewManager {
             subitems: [item]
         )
         
-        return group
+        let section = NSCollectionLayoutSection(group: group)
+        
+        return section
     }
     
-//    func makePagerItem() -> NSCollectionLayoutBoundarySupplementaryItem {
-//        let anchor = NSCollectionLayoutAnchor(
-//            edges: [.bottom],
-//            absoluteOffset: CGPoint(x: 0, y: -30.dvs)
-//        )
-//        
-//        let size = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
-//                                          heightDimension: .absolute(50.dvs))
-//        
-//        let pagerItem = NSCollectionLayoutBoundarySupplementaryItem(layoutSize: size,
-//                                                                    elementKind: "PagerKind",
-//                                                                    containerAnchor: anchor)
-//        
-//        pagerItem.zIndex = 999
-//        
-//        return pagerItem
-//    }
+    func makeLoaderItemSection() -> NSCollectionLayoutSection {
+        let itemSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .absolute(20.dvs)
+        )
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+        let group = NSCollectionLayoutGroup.vertical(
+            layoutSize: itemSize,
+            subitems: [item]
+        )
+        let section = NSCollectionLayoutSection(group: group)
+        section.contentInsets = NSDirectionalEdgeInsets(top: 8.dvs, leading: 0, bottom: 8.dvs, trailing: 0)
+        
+        return section
+    }
     
-    func applySnapshot(for dataSource: MainDataSourse, loadedNewsItems: [any GeneralSectionProtocol], isPagination: Bool) {
+    func applySnapshot(for dataSource: MainDataSourse, loadedNewsItems: [any GeneralSectionProtocol]) {
         var snapshot = dataSource.snapshot()
-        if !isPagination {
-            dataProvider.clearData()
-        }
         
         for section in loadedNewsItems {
             let itemIDs = section.item.models.map { model in
@@ -187,9 +201,6 @@ private extension MainCollectionViewManager {
             snapshot.appendSections([section.type])
             snapshot.appendItems(itemIDs, toSection: section.type)
         }
-
-        DispatchQueue.main.async {
-            dataSource.apply(snapshot, animatingDifferences: true)
-        }
+        dataSource.apply(snapshot, animatingDifferences: true)
     }
 }

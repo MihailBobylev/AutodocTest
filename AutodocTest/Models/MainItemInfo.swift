@@ -17,6 +17,7 @@ protocol GeneralSectionProtocol: Hashable {
 
 enum GeneralSectionType: Hashable {
     case single(model: SingleSectionModel)
+    case loading
 }
 
 struct GeneralCollectionSection<T: GeneralCollectionItemProtocol>: Identifiable, GeneralSectionProtocol {
