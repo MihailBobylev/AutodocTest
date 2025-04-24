@@ -17,7 +17,7 @@ protocol MainCollectionViewManagerProtocol: UICollectionViewDelegate {
 
 final class MainCollectionViewManager: NSObject, MainCollectionViewManagerProtocol {
     private var dataProvider = DataProvider.shared
-    private var data: [any CollectionSectionProtocol] = []
+    private var data: [any GeneralSectionProtocol] = []
     private var collectionView: UICollectionView
     private lazy var dataSource: MainDataSourse = {
         return MainDataSourse(collectionView: collectionView, dataProvoder: dataProvider)
@@ -80,17 +80,11 @@ final class MainCollectionViewManager: NSObject, MainCollectionViewManagerProtoc
         }
     }
     
-    func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        //(cell as? SingleCollectionCell)?.cancelImageLoading()
-    }
-    
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let selectedItem = data[indexPath.section]
         switch selectedItem.type {
-        case .single:
-            if let selectedItem = selectedItem as? CollectionSection<SingleItem> {
-                openNewsDetailsFromUrl.send(selectedItem.fullUrl)
-            }
+        case let .single(model):
+            openNewsDetailsFromUrl.send(model.fullUrl)
         }
     }
 }
@@ -178,21 +172,20 @@ private extension MainCollectionViewManager {
 //        return pagerItem
 //    }
     
-    func applySnapshot(for dataSource: MainDataSourse, loadedNewsItems: [any CollectionSectionProtocol], isPagination: Bool) {
+    func applySnapshot(for dataSource: MainDataSourse, loadedNewsItems: [any GeneralSectionProtocol], isPagination: Bool) {
         var snapshot = dataSource.snapshot()
         if !isPagination {
             dataProvider.clearData()
         }
         
         for section in loadedNewsItems {
-            let resSection = SectionModel(type: section.type, title: section.title, categoryType: "")
             let itemIDs = section.item.models.map { model in
                 dataProvider.addItem(model)
                 return model.id
             }
             
-            snapshot.appendSections([resSection])
-            snapshot.appendItems(itemIDs, toSection: resSection)
+            snapshot.appendSections([section.type])
+            snapshot.appendItems(itemIDs, toSection: section.type)
         }
 
         DispatchQueue.main.async {

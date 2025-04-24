@@ -10,13 +10,13 @@ import UIKit
 final class DataProvider {
     static let shared = DataProvider()
     
-    private var anyItemsModels: [any ItemModelProtocol] = []
+    private var anyItemsModels: [any GeneralItemModelProtocol] = []
     
-    func addItem(_ item: any ItemModelProtocol) {
+    func addItem(_ item: any GeneralItemModelProtocol) {
         anyItemsModels.append(item)
     }
     
-    func getItem(with id: UUID) -> (any ItemModelProtocol)? {
+    func getItem(with id: UUID) -> (any GeneralItemModelProtocol)? {
         return anyItemsModels.first(where: { $0.id == id })
     }
     

@@ -9,7 +9,7 @@ import Foundation
 import Combine
 
 struct LoadedData {
-    let newsInfo: [any CollectionSectionProtocol]
+    let newsInfo: [any GeneralSectionProtocol]
     let isPagination: Bool
 }
 
@@ -40,24 +40,16 @@ final class NewsViewModel: ObservableObject {
             pagingInfo.totalCount = response.totalCount
             
             let newSections = response.news.map {
-                CollectionSection(
-                    newsID: $0.id,
-                    title: $0.title,
-                    description: $0.description,
-                    publishedDate: $0.publishedDate,
-                    fullUrl: $0.fullUrl,
-                    categoryType: $0.categoryType,
-                    type: .single,
-                    item: SingleItem(models: [.init(titleImageUrl: $0.titleImageUrl)])
-                )
+                GeneralCollectionSection(type: .single(model: .init(newsID: $0.id,
+                                                                    title: $0.title,
+                                                                    description: $0.description,
+                                                                    publishedDate: $0.publishedDate,
+                                                                    fullUrl: $0.fullUrl,
+                                                                    categoryType: $0.categoryType)),
+                                         item: SingleItem(models: [.init(titleImageUrl: $0.titleImageUrl)]))
             }
 
             loadedDataSubject.send(.init(newsInfo: newSections, isPagination: !reset))
-//            if reset {
-//                newsInfo = newSections
-//            } else {
-//                newsInfo += newSections
-//            }
 
             pagingInfo.currentPage += 1
         } catch {

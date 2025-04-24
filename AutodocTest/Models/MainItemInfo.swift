@@ -7,36 +7,36 @@
 
 import UIKit
 
-protocol ItemModelProtocol: Hashable {
+// Общее
+protocol GeneralSectionProtocol: Hashable {
+    associatedtype Item: GeneralCollectionItemProtocol
+    var id: UUID { get }
+    var type: GeneralSectionType { get }
+    var item: Item { get }
+}
+
+enum GeneralSectionType: Hashable {
+    case single(model: SingleSectionModel)
+}
+
+struct GeneralCollectionSection<T: GeneralCollectionItemProtocol>: Identifiable, GeneralSectionProtocol {
+    let id = UUID()
+    let type: GeneralSectionType
+    let item: T
+}
+
+protocol GeneralItemModelProtocol: Hashable {
     var id: UUID { get }
 }
 
-protocol CollectionItemProtocol: Identifiable, Hashable {
-    associatedtype Model: ItemModelProtocol
+protocol GeneralCollectionItemProtocol: Identifiable, Hashable {
+    associatedtype Model: GeneralItemModelProtocol
     var id: UUID { get }
     var models: [Model] { get }
 }
 
-struct SingleItem: CollectionItemProtocol {
-    let id = UUID()
-    let models: [SingleItemModel]
-    
-    struct SingleItemModel: ItemModelProtocol {
-        let id = UUID()
-        let titleImageUrl: String
-    }
-}
-
-// Секции
-protocol CollectionSectionProtocol: Hashable {
-    associatedtype Item: CollectionItemProtocol
-    var id: UUID { get }
-    var title: String? { get }
-    var type: SectionType { get }
-    var item: Item { get }
-}
-
-struct CollectionSection<T: CollectionItemProtocol>: Identifiable, CollectionSectionProtocol {
+// Айтемы
+struct SingleSectionModel: Hashable { // общая инфа для секции
     let id = UUID()
     let newsID: Int
     let title: String?
@@ -44,17 +44,14 @@ struct CollectionSection<T: CollectionItemProtocol>: Identifiable, CollectionSec
     let publishedDate: String
     let fullUrl: String
     let categoryType: String
-    let type: SectionType
-    let item: T
 }
 
-struct SectionModel: Hashable {
+struct SingleItem: GeneralCollectionItemProtocol { // инфа для конкретной ячейки (горизонтальной)
     let id = UUID()
-    let type: SectionType
-    let title: String?
-    let categoryType: String
-}
-
-enum SectionType: Hashable {
-    case single
+    let models: [SingleItemModel]
+    
+    struct SingleItemModel: GeneralItemModelProtocol {
+        let id = UUID()
+        let titleImageUrl: String
+    }
 }

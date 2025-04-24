@@ -8,7 +8,7 @@
 import UIKit
 import Combine
 
-final class MainDataSourse: UICollectionViewDiffableDataSource<SectionModel, UUID> {
+final class MainDataSourse: UICollectionViewDiffableDataSource<GeneralSectionType, UUID> {
     init(collectionView: UICollectionView,
          dataProvoder: DataProvider) {
         super.init(collectionView: collectionView) { collectionView, indexPath, itemModelID in
@@ -27,29 +27,29 @@ final class MainDataSourse: UICollectionViewDiffableDataSource<SectionModel, UUI
         self.supplementaryViewProvider = { collectionView, kind, indexPath in
             guard let section = self.sectionIdentifier(for: indexPath.section) else { return UICollectionReusableView() }
             if kind == UICollectionView.elementKindSectionHeader {
-                switch section.type {
-                case .single:
+                switch section {
+                case let .single(model):
                     guard let header = collectionView.dequeueReusableSupplementaryView(
                         ofKind: kind,
                         withReuseIdentifier: HeaderView.reuseID,
                         for: indexPath
                     ) as? HeaderView else { return UICollectionReusableView() }
                     
-                    header.configure(with: section.title)
+                    header.configure(with: model.title)
                     return header
                 }
             }
             
             if kind == UICollectionView.elementKindSectionFooter {
-                switch section.type {
-                case .single:
+                switch section {
+                case let .single(model):
                     guard let footer = collectionView.dequeueReusableSupplementaryView(
                         ofKind: kind,
                         withReuseIdentifier: FooterView.reuseID,
                         for: indexPath
                     ) as? FooterView else { return UICollectionReusableView() }
                     
-                    footer.configure(with: section.categoryType)
+                    footer.configure(with: model.categoryType)
                     return footer
                 }
             }
