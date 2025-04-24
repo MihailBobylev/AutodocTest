@@ -7,33 +7,6 @@
 
 import UIKit
 
-//final class DataProvider {
-//    static let shared = DataProvider()
-//
-//    private var itemsBySection: [UUID: [any GeneralItemModelProtocol]] = [:]
-//
-//    func addItem(_ item: any GeneralItemModelProtocol, forSection sectionID: UUID) {
-//        if itemsBySection[sectionID] != nil {
-//            itemsBySection[sectionID]?.append(item)
-//        } else {
-//            itemsBySection[sectionID] = [item]
-//        }
-//    }
-//
-//    func getItem(with id: UUID) -> (any GeneralItemModelProtocol)? {
-//        for (_, items) in itemsBySection {
-//            if let match = items.first(where: { $0.id == id }) {
-//                return match
-//            }
-//        }
-//        return nil
-//    }
-//
-//    func clearData() {
-//        itemsBySection.removeAll()
-//    }
-//}
-
 final class DataProvider {
     static let shared = DataProvider()
     
