@@ -8,11 +8,16 @@
 import UIKit
 import Combine
 
-final class MainDataSourse: UICollectionViewDiffableDataSource<GeneralSectionType, UUID> {
+struct ItemID: Hashable {
+    let sectionId: UUID
+    let itemId: UUID
+}
+
+final class MainDataSourse: UICollectionViewDiffableDataSource<GeneralSectionType, ItemID> {
     init(collectionView: UICollectionView,
          dataProvoder: DataProvider) {
         super.init(collectionView: collectionView) { collectionView, indexPath, itemModelID in
-            if itemModelID == LoaderCollectionCell.id {
+            if itemModelID.itemId == LoaderCollectionCell.id {
                 guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: LoaderCollectionCell.reuseID, for: indexPath) as? LoaderCollectionCell else { return UICollectionViewCell() }
                 return cell
             }

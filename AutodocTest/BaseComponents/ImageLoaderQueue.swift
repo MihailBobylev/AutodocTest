@@ -17,6 +17,52 @@ final class ImageLoaderQueue {
 
     private init() {}
 
+//    func load(url: URL, targetSize: CGSize, into imageView: UIImageView, expectedURL: URL) {
+//        imageView.image = nil
+//        
+//        let key = url.absoluteString
+//        
+//        if let cached = ImageCache.shared.image(forKey: key) {
+//            imageView.image = cached
+//            return
+//        }
+//
+//        cancel(url: url)
+//
+//        let task = Task {
+//            await loadingSemaphore.wait()
+//            defer {
+//                Task {
+//                    await loadingSemaphore.signal()
+//                }
+//            }
+//
+//            do {
+//                //guard expectedURL == url else { return }
+//                let (data, _) = try await URLSession.shared.data(from: url)
+//                guard !Task.isCancelled else { return }
+//                guard expectedURL == url else { return }
+//                
+//                if let image = UIImage(data: data) {
+//                    let resized = ImageCache.shared.resizedImage(image, targetSize: targetSize)
+//                    ImageCache.shared.set(resized, forKey: key)
+//
+//                    await MainActor.run {
+//                        imageView.image = resized
+//                    }
+//                } else {
+//                    print("Ошибка преобразования изображения")
+//                }
+//            } catch {
+//                print("Ошибка загрузки изображения:", error)
+//            }
+//        }
+//
+//        accessQueue.async {
+//            self.loadingTasks[url] = task
+//        }
+//    }
+
     func load(url: URL, targetSize: CGSize, into imageView: UIImageView, expectedURL: URL) {
         imageView.image = nil
         
@@ -26,9 +72,9 @@ final class ImageLoaderQueue {
             imageView.image = cached
             return
         }
-
+        
         cancel(url: url)
-
+        
         let task = Task {
             await loadingSemaphore.wait()
             defer {
@@ -36,33 +82,35 @@ final class ImageLoaderQueue {
                     await loadingSemaphore.signal()
                 }
             }
-
+            
             do {
-                //guard expectedURL == url else { return }
                 let (data, _) = try await URLSession.shared.data(from: url)
                 guard !Task.isCancelled else { return }
                 guard expectedURL == url else { return }
                 
-                if let image = UIImage(data: data) {
-                    let resized = ImageCache.shared.resizedImage(image, targetSize: targetSize)
-                    ImageCache.shared.set(resized, forKey: key)
-
-                    await MainActor.run {
-                        imageView.image = resized
+                DispatchQueue.global(qos: .userInitiated).async {
+                    if let image = UIImage(data: data) {
+                        if let resized = ImageCache.shared.resizedImage(image, targetSize: targetSize) {
+                            ImageCache.shared.set(resized, forKey: key)
+                            
+                            DispatchQueue.main.async {
+                                imageView.image = resized
+                            }
+                        }
+                    } else {
+                        print("Ошибка преобразования изображения")
                     }
-                } else {
-                    print("Ошибка преобразования изображения")
                 }
             } catch {
                 print("Ошибка загрузки изображения:", error)
             }
         }
-
+        
         accessQueue.async {
             self.loadingTasks[url] = task
         }
     }
-
+    
     func cancel(url: URL) {
         accessQueue.async {
             self.loadingTasks[url]?.cancel()

@@ -83,8 +83,9 @@ final class MainCollectionViewManager: NSObject, MainCollectionViewManagerProtoc
         
         if isLoading {
             guard !snapshot.sectionIdentifiers.contains(.loading) else { return }
+            let loadingItem = ItemID(sectionId: LoaderCollectionCell.sectionId, itemId: LoaderCollectionCell.id)
             snapshot.appendSections([.loading])
-            snapshot.appendItems([LoaderCollectionCell.id], toSection: .loading)
+            snapshot.appendItems([loadingItem], toSection: .loading)
         } else {
             if snapshot.sectionIdentifiers.contains(.loading) {
                 snapshot.deleteSections([.loading])
@@ -193,10 +194,11 @@ private extension MainCollectionViewManager {
         var snapshot = dataSource.snapshot()
         
         for section in loadedNewsItems {
-            let itemIDs = section.item.models.map { model in
-                dataProvider.addItem(model)
-                return model.id
+            let models = section.item.models
+            let itemIDs = models.map { model in
+                return ItemID(sectionId: section.id, itemId: model.id)
             }
+            dataProvider.addItem(models, for: section)
             
             snapshot.appendSections([section.type])
             snapshot.appendItems(itemIDs, toSection: section.type)

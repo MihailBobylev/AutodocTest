@@ -13,6 +13,13 @@ final class LoaderCollectionCell: UICollectionViewCell {
         String(describing: Self.self)
     }
     
+    static let sectionId: UUID = {
+        guard let uuid = UUID(uuidString: "00000000-0000-0000-0000-000000000002") else {
+            fatalError("Failed to initialize UUID for LoaderCollectionCell")
+        }
+        return uuid
+    }()
+    
     static let id: UUID = {
         guard let uuid = UUID(uuidString: "00000000-0000-0000-0000-000000000001") else {
             fatalError("Failed to initialize UUID for LoaderCollectionCell")
