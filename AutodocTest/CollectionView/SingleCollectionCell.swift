@@ -32,8 +32,8 @@ final class SingleCollectionCell: UICollectionViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
-        imageView.cancelImageLoad()
         imageView.image = nil
+        imageView.cancelImageLoad()
     }
 }
 
@@ -51,10 +51,6 @@ extension SingleCollectionCell {
             let targetSize = CGSize(width: contentView.bounds.width, height: contentView.bounds.height)
             imageView.loadImage(from: url, targetSize: targetSize)
         }
-    }
-    
-    func cancelImageLoading() {
-        imageView.cancelImageLoad()
     }
 }
 

@@ -31,7 +31,7 @@ final class MainDataSourse: UICollectionViewDiffableDataSource<GeneralSectionTyp
                 return cell
             }
             
-            return nil
+            return UICollectionViewCell()
         }
         
         self.supplementaryViewProvider = { collectionView, kind, indexPath in
@@ -68,7 +68,7 @@ final class MainDataSourse: UICollectionViewDiffableDataSource<GeneralSectionTyp
                 }
             }
             
-            return nil
+            return UICollectionReusableView()
         }
     }
 }

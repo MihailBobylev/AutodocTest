@@ -8,7 +8,7 @@
 import Foundation
 import UIKit
 
-final class ImageLoaderQueue {
+final class ImageLoaderQueue: @unchecked Sendable {
     static let shared = ImageLoaderQueue()
 
     private let loadingSemaphore = AsyncSemaphore(count: 4)
@@ -41,21 +41,23 @@ final class ImageLoaderQueue {
                 let (data, _) = try await URLSession.shared.data(from: url)
                 guard !Task.isCancelled else { return }
                 guard expectedURL == url else { return }
-                
-                DispatchQueue.global(qos: .userInitiated).async {
-                    if let image = UIImage(data: data) {
-                        let resized = ImageCache.shared.resizedImage(image, targetSize: targetSize)
-                        ImageCache.shared.set(resized, forKey: key)
-                        
-                        DispatchQueue.main.async {
-                            imageView.image = resized
-                        }
-                    } else {
-                        print("Ошибка преобразования изображения")
-                    }
+
+                guard let image = UIImage(data: data) else {
+                    print("Ошибка преобразования изображения")
+                    return
                 }
-            } catch {
-                print("Ошибка загрузки изображения:", error)
+                
+                let resized = ImageCache.shared.resizedImage(image, targetSize: targetSize)
+                ImageCache.shared.set(resized, forKey: key)
+
+                await MainActor.run {
+                    imageView.image = resized
+                }
+            } catch let error as NSError {
+                if error.domain == NSURLErrorDomain && error.code == NSURLErrorCancelled {
+                } else {
+                    print("Ошибка загрузки изображения:", error)
+                }
             }
         }
         

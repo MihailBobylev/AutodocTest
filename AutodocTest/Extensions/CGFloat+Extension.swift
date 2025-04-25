@@ -29,7 +29,6 @@ extension CGFloat {
         return self * multiplier
     }
     
-    // Minimum visible font size is 10
     fileprivate static func getDynamicFontSize(size: CGFloat) -> CGFloat {
         return (CGFloat.maximum(10, size * UIScreen.main.bounds.height / baseDeviceHeight))
     }

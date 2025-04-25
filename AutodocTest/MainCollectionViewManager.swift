@@ -19,7 +19,6 @@ protocol MainCollectionViewManagerProtocol: UICollectionViewDelegate {
 
 final class MainCollectionViewManager: NSObject, MainCollectionViewManagerProtocol {
     private var dataProvider = DataProvider.shared
-    private var data: [any GeneralSectionProtocol] = []
     private var collectionView: UICollectionView
     private lazy var dataSource: MainDataSourse = {
         return MainDataSourse(collectionView: collectionView, dataProvoder: dataProvider)
@@ -61,12 +60,6 @@ final class MainCollectionViewManager: NSObject, MainCollectionViewManagerProtoc
     }
     
     func fillData(loadedData: LoadedData) {
-        if loadedData.isPagination {
-            self.data += loadedData.newsInfo
-        } else {
-            self.data = loadedData.newsInfo
-        }
-        
         applySnapshot(for: dataSource, loadedNewsItems: loadedData.newsInfo)
     }
     
@@ -100,13 +93,14 @@ extension MainCollectionViewManager {
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         (cell as? SingleCollectionCell)?.startImageLoading()
         
-        if indexPath.section == data.count - 1 {
+        if indexPath.section == dataProvider.sectionsIds.count - 1 {
             getNextPageSubject.send()
         }
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let selectedItem = data[indexPath.section]
+        guard let selectedItem = dataProvider.getSectionForIndexPath(indexPath) else { return }
+        
         switch selectedItem.type {
         case let .single(model):
             openNewsDetailsFromUrl.send(model.fullUrl)
@@ -134,7 +128,7 @@ private extension MainCollectionViewManager {
     func makeFooter() -> NSCollectionLayoutBoundarySupplementaryItem {
         let footerSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
-            heightDimension: .estimated(80.dvs)
+            heightDimension: .absolute(60.dvs)
         )
         let footerItem = NSCollectionLayoutBoundarySupplementaryItem(
             layoutSize: footerSize,

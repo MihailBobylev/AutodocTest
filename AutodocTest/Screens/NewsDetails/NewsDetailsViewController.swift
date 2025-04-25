@@ -48,7 +48,6 @@ final class NewsDetailsViewController: UIViewController {
         view.addSubview(activityIndicator)
         
         webView.snp.makeConstraints { make in
-            //make.edges.equalToSuperview()
             make.top.equalTo(view.safeAreaLayoutGuide)
             make.leading.trailing.bottom.equalToSuperview()
         }

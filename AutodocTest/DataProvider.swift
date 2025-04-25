@@ -10,7 +10,7 @@ import UIKit
 final class DataProvider {
     static let shared = DataProvider()
     
-    private var sectionsIds: [any GeneralSectionProtocol] = []
+    private(set) var sectionsIds: [any GeneralSectionProtocol] = []
     private var itemsBySection: [UUID: [any GeneralItemModelProtocol]] = [:]
     
     func addItem(_ items: [any GeneralItemModelProtocol], for section: any GeneralSectionProtocol) {

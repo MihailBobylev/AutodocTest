@@ -51,10 +51,13 @@ final class NewsViewController: UIViewController {
 
 private extension NewsViewController {
     @objc func refresh(sender: UIRefreshControl) {
-        notificationsCollectionViewManager?.resetAllData()
+        if !viewModel.isLoading {
+            notificationsCollectionViewManager?.resetAllData()
+        }
         Task {
             await viewModel.loadNews(reset: true)
         }
+        
         sender.endRefreshing()
     }
     

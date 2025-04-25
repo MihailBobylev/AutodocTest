@@ -34,8 +34,7 @@ final class NewsViewModel: ObservableObject {
             pagingInfo = PagingInfo(currentPage: 1, pageSize: pagingInfo.pageSize, totalCount: 0)
         }
 
-        let delayInNanoseconds: UInt64 = 1 * 1_000_000_000
-        try? await Task.sleep(nanoseconds: delayInNanoseconds)
+        try? await Task.sleep(nanoseconds: 2 * 1_000_000_000)
         
         do {
             let response = try await newsService.fetchNews(page: pagingInfo.currentPage, pageSize: pagingInfo.pageSize)

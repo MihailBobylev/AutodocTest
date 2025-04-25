@@ -37,7 +37,7 @@ protocol GeneralCollectionItemProtocol: Identifiable, Hashable {
 }
 
 // Айтемы
-struct SingleSectionModel: Hashable { // общая инфа для секции
+struct SingleSectionModel: Hashable {
     let id = UUID()
     let newsID: Int
     let title: String?
@@ -47,7 +47,7 @@ struct SingleSectionModel: Hashable { // общая инфа для секции
     let categoryType: String
 }
 
-struct SingleItem: GeneralCollectionItemProtocol { // инфа для конкретной ячейки (горизонтальной)
+struct SingleItem: GeneralCollectionItemProtocol {
     let id = UUID()
     let models: [SingleItemModel]
     
