@@ -18,7 +18,7 @@
 		746C34BE2DB671CA0063EDFF /* Exceptions for "AutodocTest" folder in "AutodocTest" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Info.plist,
+				App/Info.plist,
 			);
 			target = 74C32ACD2D4BC8C100DD67C8 /* AutodocTest */;
 		};
@@ -153,7 +153,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 95M8D9TAJ2;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = AutodocTest/Info.plist;
+				INFOPLIST_FILE = AutodocTest/App/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = "";
@@ -186,7 +186,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 95M8D9TAJ2;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = AutodocTest/Info.plist;
+				INFOPLIST_FILE = AutodocTest/App/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = "";

@@ -8,10 +8,6 @@
 import UIKit
 import SnapKit
 
-protocol FooterViewDelegate: AnyObject {
-    func collapseDescription()
-}
-
 final class FooterView: UICollectionReusableView {
     static var reuseID: String {
         String(describing: Self.self)
@@ -34,6 +30,11 @@ final class FooterView: UICollectionReusableView {
         fatalError("init(coder:) has not been implemented")
     }
 
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        categoryTypeLabel.text = nil
+    }
+    
     func configure(with categoryType: String) {
         categoryTypeLabel.text = categoryType
     }
