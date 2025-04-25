@@ -30,6 +30,7 @@ final class DataProvider {
     }
     
     func clearData() {
+        sectionsIds.removeAll()
         itemsBySection.removeAll()
     }
 }
