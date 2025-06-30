@@ -9,8 +9,8 @@ import UIKit
 import SnapKit
 
 final class SingleCollectionCell: UICollectionViewCell {
-    private let imageView: AsyncImageView = {
-        let imageView = AsyncImageView()
+    private let imageView: UIImageView = {
+        let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
         return imageView
     }()
@@ -18,8 +18,6 @@ final class SingleCollectionCell: UICollectionViewCell {
     static var reuseID: String {
         String(describing: Self.self)
     }
-    
-    private var itemModel: SingleItem.SingleItemModel?
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -33,31 +31,23 @@ final class SingleCollectionCell: UICollectionViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         imageView.image = nil
-        imageView.cancelImageLoad()
-    }
-}
-
-extension SingleCollectionCell {
-    func configure(itemModel: SingleItem.SingleItemModel) {
-        self.itemModel = itemModel
-        startImageLoading()
+        ImageLoader.shared.cancelLoad(for: imageView)
     }
     
-    func startImageLoading() {
-        guard let titleImageUrl = itemModel?.titleImageUrl else { return }
-        guard imageView.image == nil else { return }
-        
-        if let url = URL(string: titleImageUrl) {
-            let targetSize = CGSize(width: contentView.bounds.width, height: contentView.bounds.height)
-            imageView.loadImage(from: url, targetSize: targetSize)
+    func configure(titleImageUrl: String?) {
+        guard let url = URL(string: titleImageUrl ?? "") else {
+            print("SingleCollectionCell: invalid url")
+            imageView.image = UIImage(resource: .imageNotFound)
+            return
         }
+        let targetSize = contentView.bounds.size
+        ImageLoader.shared.loadImage(from: url, into: imageView, targetSize: targetSize)
     }
 }
 
 private extension SingleCollectionCell {
     func setupUI() {
         contentView.addSubview(imageView)
-        
         imageView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }

@@ -53,6 +53,6 @@ struct SingleItem: GeneralCollectionItemProtocol {
     
     struct SingleItemModel: GeneralItemModelProtocol {
         let id = UUID()
-        let titleImageUrl: String
+        let titleImageUrl: String?
     }
 }

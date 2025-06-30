@@ -8,7 +8,7 @@
 import UIKit
 
 struct NewsFactory {
-    static func makeModule() -> UINavigationController {
+    @MainActor static func makeModule() -> UINavigationController {
         let viewModel = NewsViewModel()
         let viewController = NewsViewController(viewModel: viewModel)
         

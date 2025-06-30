@@ -8,68 +8,69 @@
 import Foundation
 import UIKit
 
-final class ImageLoaderQueue: @unchecked Sendable {
-    static let shared = ImageLoaderQueue()
-
-    private let loadingSemaphore = AsyncSemaphore(count: 4)
-    private var loadingTasks: [URL: Task<Void, Never>] = [:]
-    private let accessQueue = DispatchQueue(label: "image.loader.task.access")
-
+final class ImageLoader {
+    static let shared = ImageLoader()
+    
+    private let semaphore = AsyncSemaphore(count: 4)
+    private let cache = NSCache<NSString, UIImage>()
+    private let taskMap = NSMapTable<UIImageView, TaskBox>(
+        keyOptions: .weakMemory,
+        valueOptions: .strongMemory
+    )
+    
     private init() {}
-
-    func load(url: URL, targetSize: CGSize, into imageView: UIImageView, expectedURL: URL) {
+    
+    func loadImage(from url: URL, into imageView: UIImageView, targetSize: CGSize) {
+        cancelLoad(for: imageView)
         imageView.image = nil
         
-        let key = url.absoluteString
-        
-        if let cached = ImageCache.shared.image(forKey: key) {
+        let cacheKey = url.absoluteString as NSString
+        if let cached = cache.object(forKey: cacheKey) {
             imageView.image = cached
             return
         }
         
-        cancel(url: url)
-        
-        let task = Task {
-            await loadingSemaphore.wait()
-            defer {
-                Task {
-                    await loadingSemaphore.signal()
+        let task = Task.detached { [weak self, weak imageView] in
+            await self?.semaphore.wait()
+            defer { Task { await self?.semaphore.signal() } }
+            
+            guard let data = try? Data(contentsOf: url),
+                  let originalImage = UIImage(data: data) else { return }
+            
+            let resized = await self?.resize(image: originalImage, targetSize: targetSize)
+            let imageView = imageView
+            await MainActor.run {
+                guard let imageView = imageView else { return }
+                if imageView.associatedURL == url {
+                    imageView.image = resized
                 }
             }
             
-            do {
-                let (data, _) = try await URLSession.shared.data(from: url)
-                guard !Task.isCancelled else { return }
-                guard expectedURL == url else { return }
-
-                guard let image = UIImage(data: data) else {
-                    print("Ошибка преобразования изображения")
-                    return
-                }
-                
-                let resized = ImageCache.shared.resizedImage(image, targetSize: targetSize)
-                ImageCache.shared.set(resized, forKey: key)
-
-                await MainActor.run {
-                    imageView.image = resized
-                }
-            } catch let error as NSError {
-                if error.domain == NSURLErrorDomain && error.code == NSURLErrorCancelled {
-                } else {
-                    print("Ошибка загрузки изображения:", error)
-                }
+            if let resized, let self {
+                self.cache.setObject(resized, forKey: cacheKey)
             }
         }
         
-        accessQueue.async {
-            self.loadingTasks[url] = task
-        }
+        taskMap.setObject(TaskBox(task), forKey: imageView)
+        imageView.associatedURL = url
     }
     
-    func cancel(url: URL) {
-        accessQueue.async {
-            self.loadingTasks[url]?.cancel()
-            self.loadingTasks.removeValue(forKey: url)
+    func cancelLoad(for imageView: UIImageView) {
+        taskMap.object(forKey: imageView)?.task.cancel()
+        taskMap.removeObject(forKey: imageView)
+    }
+}
+
+private extension ImageLoader {
+    func resize(image: UIImage, targetSize: CGSize) async -> UIImage {
+        await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                let renderer = UIGraphicsImageRenderer(size: targetSize)
+                let resized = renderer.image { _ in
+                    image.draw(in: CGRect(origin: .zero, size: targetSize))
+                }
+                continuation.resume(returning: resized)
+            }
         }
     }
 }

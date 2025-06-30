@@ -91,8 +91,6 @@ final class MainCollectionViewManager: NSObject, MainCollectionViewManagerProtoc
 
 extension MainCollectionViewManager {
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        (cell as? SingleCollectionCell)?.startImageLoading()
-        
         if indexPath.section == dataProvider.sectionsIds.count - 1 {
             getNextPageSubject.send()
         }

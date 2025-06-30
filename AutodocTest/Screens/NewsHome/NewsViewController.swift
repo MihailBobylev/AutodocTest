@@ -42,22 +42,14 @@ final class NewsViewController: UIViewController {
         setupAppearance()
         bind()
         setupUI()
-        
-        Task {
-            await viewModel.loadNews(reset: true)
-        }
+        viewModel.loadNews(reset: true)
     }
 }
 
 private extension NewsViewController {
     @objc func refresh(sender: UIRefreshControl) {
-        if !viewModel.isLoading {
-            notificationsCollectionViewManager?.resetAllData()
-        }
-        Task {
-            await viewModel.loadNews(reset: true)
-        }
-        
+        viewModel.loadNews(reset: true)
+        notificationsCollectionViewManager?.resetAllData()
         sender.endRefreshing()
     }
     

@@ -27,7 +27,7 @@ final class MainDataSourse: UICollectionViewDiffableDataSource<GeneralSectionTyp
             if let singleItem = item as? SingleItem.SingleItemModel {
                 guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: SingleCollectionCell.reuseID, for: indexPath) as?
                         SingleCollectionCell else { return UICollectionViewCell() }
-                cell.configure(itemModel: singleItem)
+                cell.configure(titleImageUrl: singleItem.titleImageUrl)
                 return cell
             }
             
